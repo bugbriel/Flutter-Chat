@@ -1,0 +1,180 @@
+import 'package:flutter/material.dart';
+
+class ChatStyles {
+  static const TextStyle messageTextStyle = TextStyle(
+    color: Color.fromARGB(255, 255, 0, 0),
+    fontSize: 16,
+  );
+
+  static const TextStyle inputTextStyle = TextStyle(
+    color: Colors.black,
+    fontSize: 18,
+  );
+
+  static const Color sendButtonColor = Colors.blue;
+}
+
+class ChatMessage extends StatelessWidget {
+  final String text;
+  final String imageUrl;
+  final bool isGif;
+
+  ChatMessage({required this.text, required this.imageUrl, this.isGif = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(imageUrl),
+        ),
+        SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 5.0),
+              child: isGif 
+                ? Image.network(text)
+                : Text(text, style: ChatStyles.messageTextStyle),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// Widget personalizado para la caja de entrada de texto
+class ChatInput extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onSend;
+
+  ChatInput({required this.controller, required this.onSend});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            style: ChatStyles.inputTextStyle,
+            decoration: InputDecoration(
+              hintText: 'Escribe un mensaje...',
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.send, color: ChatStyles.sendButtonColor),
+          onPressed: onSend,
+        ),
+      ],
+    );
+  }
+}
+
+class SendButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  SendButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.send, color: ChatStyles.sendButtonColor),
+      onPressed: onPressed,
+    );
+  }
+}
+
+// Pantalla principal de la aplicación
+void main() {
+  runApp(ChatApp());
+}
+
+class ChatApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Fulano',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: ChatScreen(),
+    );
+  }
+}
+
+class ChatScreen extends StatefulWidget {
+  @override
+  _ChatScreenState createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final List<ChatMessage> _messages = [];
+  final TextEditingController _textController = TextEditingController();
+
+  void _handleSubmitted(String text) {
+    _textController.clear();
+    ChatMessage message = ChatMessage(
+      text: text,
+      imageUrl: "https://www.example.com/user.png",
+    );
+    setState(() {
+      _messages.insert(0, message);
+    });
+
+    _autoRespond(text);
+  }
+
+  void _autoRespond(String text) {
+    String response;
+    if (text.toLowerCase() == 'hola, ¿cómo estás?') {
+      response = 'Bien, gracias.';
+    } else if (text.toLowerCase() == '¿qué haces?') {
+      response = 'Estoy aquí, chateando contigo.';
+    } else {
+      response = 'Lo siento, no entendí eso.';
+    }
+
+    ChatMessage responseMessage = ChatMessage(
+      text: response,
+      imageUrl: "https://www.example.com/bot.png",
+    );
+    setState(() {
+      _messages.insert(0, responseMessage);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Fulano'),
+      ),
+      body: Column(
+        children: <Widget>[
+          Flexible(
+            child: ListView.builder(
+              padding: EdgeInsets.all(8.0),
+              reverse: true,
+              itemBuilder: (_, int index) => _messages[index],
+              itemCount: _messages.length,
+            ),
+          ),
+          Divider(height: 1.0),
+          Container(
+            decoration: BoxDecoration(color: Theme.of(context).cardColor),
+            child: ChatInput(
+              controller: _textController,
+              onSend: () => _handleSubmitted(_textController.text),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
